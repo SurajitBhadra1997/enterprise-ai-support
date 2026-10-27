@@ -20,7 +20,7 @@ class IngestionPipeline:
         # conflict_checker: ConflictChecker,
         embedding_service: EmbeddingService,
         vector_store: VectorStore,
-        # review_queue: ReviewQueue,
+        review_queue: ReviewQueue,
     ) -> None:
         self.parser = parser
         self.chunker = chunker
@@ -28,7 +28,7 @@ class IngestionPipeline:
         # self.conflict_checker = conflict_checker
         self.embedding_service = embedding_service
         self.vector_store = vector_store
-        # self.review_queue = review_queue
+        self.review_queue = review_queue
 
     def process(
         self,
@@ -40,10 +40,29 @@ class IngestionPipeline:
         chunked_docs = self.chunker.chunk(parsed_docs)
         pii_detected_entities = self.pii_detector.detect(parsed_docs.extracted_text)
 
+        if len(pii_detected_entities.detected_categories) > 0:
+            review_details = self.review_queue.submit_for_review(
+                document_id, tenant_id, "pii entity detected"
+            )
+            self.review_queue.store_pending_context(
+                review_details.review_id,tenant_id,chunked_docs
+            )
+            return IngestionResult(
+                processing_state="review_required",
+                review_requirement=True,
+                failure_message=None,
+                review_id=review_details.review_id,
+            )
+
         embedded_docs = self.embedding_service.embed_documents(
             [chunk.text for chunk in chunked_docs]
         )
 
-        upserted_result=self.vector_store.upsert_chunks(chunked_docs, embedded_docs)
+        self.vector_store.upsert_chunks(chunked_docs, embedded_docs)
 
-        return upserted_result
+        return IngestionResult(
+            processing_state="indexed",
+            review_requirement=False,
+            failure_message=None,
+            review_id=None,
+        )

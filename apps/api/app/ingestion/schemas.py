@@ -74,3 +74,11 @@ class DocumentReviewRecord(BaseModel):
     reason: str
     reviewer_id: str | None = None
     decision_notes: str | None = None
+
+
+class ApprovalRequest(BaseModel):
+    review_id: str
+    tenant_id: str
+    reviewer_id:str
+    decision: Literal["approved", "rejected"]
+    decision_notes: str | None = None
