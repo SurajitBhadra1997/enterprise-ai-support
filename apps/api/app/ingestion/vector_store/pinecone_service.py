@@ -39,9 +39,7 @@ class PineconeService(VectorStore):
 
         response= self.index.upsert(vectors=vectors_to_upsert)
 
-        return json.dumps({
-            "upserted_count":response.upserted_count
-        }) 
+        return response.upserted_count
 
     def search(
         self,

@@ -15,6 +15,7 @@ class ReviewService(ReviewQueue):
         document_id: str,
         tenant_id: str,
         reason: str,
+        chunk_id: str
     ) -> DocumentReviewRecord:
         review_details = DocumentReviewRecord(
             review_id=str(uuid.uuid4()),
@@ -24,6 +25,7 @@ class ReviewService(ReviewQueue):
             reason=reason,
             reviewer_id=None,
             decision_notes=None,
+            chunk_id=chunk_id
         )
         self.review_records.append(review_details)
         return review_details

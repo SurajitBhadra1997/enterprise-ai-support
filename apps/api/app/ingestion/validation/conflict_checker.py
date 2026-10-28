@@ -11,6 +11,6 @@ class ConflictChecker:
         self,
         document_id: str,
         tenant_id: str,
-        chunks: list[DocumentChunk],
+        approved_chunks: list[DocumentChunk],
     ) -> ConflictCheckResult:
         ...

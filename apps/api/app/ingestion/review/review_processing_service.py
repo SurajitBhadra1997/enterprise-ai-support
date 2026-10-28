@@ -29,29 +29,36 @@ class ReviewProcessingService:
         if validate_review_record is None:
             raise ValueError("Review does not exists")
 
-        if validate_review_record.status == "rejected":
-            raise ValueError("Review is already rejected")
+        if validate_review_record.status != "pending":
+            raise ValueError("Review is not pending")
 
         if validate_review_record.status == "pending":
+            pending_context = self.review_service.get_pending_context(
+                review_id, tenant_id
+            )
+
+            if not pending_context:
+                raise ValueError("No chunk is associate with this review")
+
+            embedded_docs = self.embedding_service.embed_documents(
+                [chunk.text for chunk in pending_context]
+            )
+
+            if len(embedded_docs) != len(pending_context):
+                raise ValueError("Chunk and embedding size are not equal")
+
+            upserted_count = self.vector_store.upsert_chunks(
+                pending_context, embedded_docs
+            )
+
+            if upserted_count != len(pending_context):
+                raise ValueError("Not all chunks were reported as upserted")
+
             self.review_service.record_decision(
                 review_id, tenant_id, reviewer_id, "approved", decision_notes
             )
 
-        pending_context = self.review_service.get_pending_context(review_id, tenant_id)
-
-        if pending_context is None:
-            raise ValueError("No chunk is associate with this review")
-
-        embedded_docs = self.embedding_service.embed_documents(
-            [chunk.text for chunk in pending_context]
-        )
-
-        if len(embedded_docs) != len(pending_context):
-            raise ValueError("Chunk and embedding size are not equal")
-
-        self.vector_store.upsert_chunks(pending_context, embedded_docs)
-
-        self.review_service.remove_pending_context(review_id, tenant_id)
+            self.review_service.remove_pending_context(review_id, tenant_id)
 
         return True
 

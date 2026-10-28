@@ -42,16 +42,11 @@ class VectorSearchResult(BaseModel):
 
 
 class IngestionResult(BaseModel):
-    processing_state: Literal[
-        "queued",
-        "processing",
-        "review_required",
-        "indexed",
-        "failed",
-    ]
     review_requirement: bool
     failure_message: str | None = None
-    review_id: str | None = None
+    review_ids: list[str] | None = None
+    chunks_under_review: list[DocumentChunk]
+    chunks_successfully_indexed: list[DocumentChunk]
 
 
 class PIIDetectionResult(BaseModel):
@@ -60,8 +55,15 @@ class PIIDetectionResult(BaseModel):
     requires_review: bool
 
 
+class ConflictChunks(BaseModel):
+    exisitng_approved_chunk: list[DocumentChunk]
+    conflicitng_chunk: list[DocumentChunk]
+
+
 class ConflictCheckResult(BaseModel):
     status: Literal["clear", "duplicate", "conflict", "review_required"]
+    chunks_under_review: list[ConflictChunks]
+    chunks_clear: list[DocumentChunk]
     conflicting_document_ids: list[str]
     explanation: str | None = None
 
@@ -74,11 +76,12 @@ class DocumentReviewRecord(BaseModel):
     reason: str
     reviewer_id: str | None = None
     decision_notes: str | None = None
+    chunk_id: str
 
 
 class ApprovalRequest(BaseModel):
     review_id: str
     tenant_id: str
-    reviewer_id:str
+    reviewer_id: str
     decision: Literal["approved", "rejected"]
     decision_notes: str | None = None

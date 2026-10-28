@@ -11,6 +11,7 @@ from app.ingestion.embeddings.sentence_transformer_service import (
 from app.ingestion.vector_store.pinecone_service import PineconeService
 from app.ingestion.review.review_service import ReviewService
 from app.ingestion.review.review_processing_service import ReviewProcessingService
+from app.ingestion.validation.conflict_checker import ConflictChecker
 
 review_service = ReviewService()
 
@@ -23,6 +24,7 @@ def get_ingestion_pipeline() -> IngestionPipeline:
         embedding_service=SentenceTransformerService(),
         vector_store=PineconeService(),
         review_queue=review_service,
+        conflict_checker=ConflictChecker(),
     )
 
 

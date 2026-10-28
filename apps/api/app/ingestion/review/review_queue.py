@@ -12,6 +12,7 @@ class ReviewQueue(ABC):
         document_id: str,
         tenant_id: str,
         reason: str,
+        chunk_id: str
     ) -> DocumentReviewRecord: ...
 
     @abstractmethod
